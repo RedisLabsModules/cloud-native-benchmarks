@@ -1,0 +1,56 @@
+version: 0.2
+name: "ycsb-commerce-rediscloud-redisjson-load"
+description: "YCSB Commerce workload (LOAD step) using RediSearch v2 + RedisJSON v2"
+inventory:
+  - client: 
+    cloud_provider: "aws"
+    region: "us-east-2"
+    zone: "us-east-2a"
+    type: terraform
+    source: https://github.com/RedisLabsModules/testing-infrastructure/terraform/oss-1node-c5.4xlarge
+  - db:
+    cloud_provider: "aws"
+    region: "us-east-2"
+    zone: "us-east-2a"
+    type: static
+    env:
+      - RC_JSON_HOST
+      - RC_JSON_PORT
+      - RC_JSON_USER
+      - RC_JSON_PASS
+clientconfig:
+  - tool: ycsb
+  - tool_source:
+    - remote: https://s3.amazonaws.com/benchmarks.redislabs/redisearch/ycsb/ycsb-redisjson2-binding-0.18.0-SNAPSHOT.tar.gz
+    - bin_path: ./bin/ycsb
+  - parameters:
+    - database: redisjson2
+    - step: load
+    - workload: "./workloads/workload-ecommerce"
+    - override_workload_properties:
+      - dictfile: "./bin/uci_online_retail.csv"
+      - recordcount: 100000
+      - operationcount: 100000
+      - redis.host: $RC_JSON_HOST
+      - redis.port: $RC_JSON_PORT
+      - redis.user: $RC_JSON_USER
+      - redis.pass: $RC_JSON_PASS
+    - threads: 64
+exporter:
+  redistimeseries:
+    break_by:
+      - version
+      - commit
+    timemetric: "$.StartTime"
+    metrics:
+      - "$.Tests.OVERALL.Throughput_ops_sec_"
+      - "$.Tests.OVERALL.Operations"
+      - "$.Tests.INSERT.AverageLatency_us_"
+      - "$.Tests.INSERT.MinLatency_us_"
+      - "$.Tests.INSERT.95thPercentileLatency_us_"
+      - "$.Tests.INSERT.99thPercentileLatency_us_"
+      - "$.Tests.INSERT.MaxLatency_us_"
+      - "$.Tests.INSERT.Return_OK"
+kpis:
+  - eq: { $.Tests.INSERT.Return_OK: 100000 }
+  - ge: { $.Tests.OVERALL.Throughput_ops_sec_: 2000 }
