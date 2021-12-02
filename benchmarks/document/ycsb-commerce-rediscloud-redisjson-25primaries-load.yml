@@ -1,14 +1,8 @@
 version: 0.2
-name: "ycsb-commerce-rediscloud-redisjson-load"
+name: "ycsb-commerce-rediscloud-redisjson-25primaries-load"
 description: "YCSB Commerce workload (LOAD step) using RediSearch v2 + RedisJSON v2"
 inventory:
-  - client: 
-    cloud_provider: "aws"
-    region: "us-east-2"
-    zone: "us-east-2a"
-    type: terraform
-    source: https://github.com/RedisLabsModules/testing-infrastructure/terraform/oss-1node-c5.4xlarge
-  - db:
+  db:
     cloud_provider: "aws"
     region: "us-east-2"
     zone: "us-east-2a"
@@ -51,6 +45,4 @@ exporter:
       - "$.Tests.INSERT.99thPercentileLatency_us_"
       - "$.Tests.INSERT.MaxLatency_us_"
       - "$.Tests.INSERT.Return_OK"
-kpis:
-  - eq: { $.Tests.INSERT.Return_OK: 100000 }
-  - ge: { $.Tests.OVERALL.Throughput_ops_sec_: 2000 }
+
