@@ -1,0 +1,17 @@
+description: "The defaults.yml file is used across all document spec benchmark.
+              By default we're using the same client spec across benchmarks.
+              A c5.4xlarge machine with Ubuntu 18.04 on us-east-2a region"
+inventory:
+  client:
+    cloud_provider: "aws"
+    region: "us-east-2"
+    zone: "us-east-2a"
+    type: terraform
+    terraform:
+      source: https://github.com/RedisLabsModules/testing-infrastructure
+      branch: master
+      path: /terraform/oss-1node-c5.4xlarge
+      private_key:
+        variable: "private_key"
+        location: "/tmp/benchmarks.redislabs.pem"
+        from_env: CNB_KEY

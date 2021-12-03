@@ -1,0 +1,35 @@
+[tool.poetry]
+name = "cloud-native-benchmarks"
+version = "0.1.0"
+description = "DBMS cloud native benchmarks, broken down by database model"
+authors = ["filipecosta90 <filipecosta.90@gmail.com>","Redis Performance Group <performance@redis.com>"]
+readme = "README.md"
+
+[tool.poetry.scripts]
+cnb-run = "cloud_native_benchmarks.runner.cli:main"
+
+[tool.poetry.dependencies]
+python = "^3.6.1"
+PyYAML = "^5.4.0"
+python_terraform = "^0.10.1"
+GitPython = "^3.1.12"
+toml = "^0.10.2"
+redistimeseries = "1.4.3"
+redis = "^3.5.3"
+argparse = "^1.4.0"
+typed-ast = "^1.5.0"
+redisbench-admin = "^0.5.24"
+
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+pytest-cov = "^2.9.0"
+codecov = "^2.1.4"
+black = "^20.8b1"
+flake8 = "^3.9.1"
+tox-poetry-installer = {extras = ["poetry"], version = "^0.8.1"}
+tox-docker = "^3.0.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
