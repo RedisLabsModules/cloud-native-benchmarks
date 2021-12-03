@@ -10,7 +10,7 @@ from cloud_native_benchmarks.inventory.config import merge_default_inventory_spe
 
 def test_get_client_terraform_spec():
     with open(
-        "./benchmarks/document/ycsb-commerce-rediscloud-redisjson-25primaries-load.yml",
+        "./benchmarks/document/ycsb-commerce-rediscloud-redisjson-25primaries-load-1Mdocs.yml",
         "r",
     ) as yml_file:
         benchmark_config = yaml.safe_load(yml_file)

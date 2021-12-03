@@ -16,11 +16,21 @@ from cloud_native_benchmarks.inventory.config import (
 
 def test_get_db_env_map():
     with open(
-        "./benchmarks/document/ycsb-commerce-rediscloud-redisjson-25primaries-load.yml",
+        "./benchmarks/document/ycsb-commerce-rediscloud-redisjson-25primaries-load-1Mdocs.yml",
         "r",
     ) as yml_file:
         benchmark_config = yaml.safe_load(yml_file)
         res_bench, benchmark_spec = extract_inventory_spec(benchmark_config)
+
+        for env_name in [
+            "RC_JSON_HOST",
+            "RC_JSON_USER",
+            "RC_JSON_PORT",
+            "RC_JSON_PASS",
+        ]:
+            if env_name in os.environ:
+                del os.environ[env_name]
+
         db_env_result, db_env_map = get_db_env_map(benchmark_spec)
         assert db_env_result == False
         assert len(db_env_map.keys()) == 4
@@ -43,7 +53,7 @@ def test_merge_default_inventory_spec():
     benchmark_config = {}
     default_config = {}
     with open(
-        "./benchmarks/document/ycsb-commerce-rediscloud-redisjson-25primaries-load.yml",
+        "./benchmarks/document/ycsb-commerce-rediscloud-redisjson-25primaries-load-1Mdocs.yml",
         "r",
     ) as yml_file:
         benchmark_config = yaml.safe_load(yml_file)
