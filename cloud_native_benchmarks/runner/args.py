@@ -19,11 +19,11 @@ SPECS_PATH_TEST_SUITES = os.getenv(
     "SPECS_PATH_TEST_SUITES", SPECS_PATH_TEST_SUITES_DEFAULT_PATH
 )
 TERRAFORM_BIN_PATH = os.getenv("TERRAFORM_BIN_PATH", "terraform")
-DATASINK_RTS_PUSH = bool(os.getenv("DATASINK_PUSH_RTS", False))
-DATASINK_RTS_AUTH = os.getenv("DATASINK_RTS_AUTH", None)
-DATASINK_RTS_USER = os.getenv("DATASINK_RTS_USER", None)
-DATASINK_RTS_HOST = os.getenv("DATASINK_RTS_HOST", "localhost")
-DATASINK_RTS_PORT = int(os.getenv("DATASINK_RTS_PORT", "6379"))
+CNB_DATASINK_RTS_PUSH = bool(os.getenv("CNB_DATASINK_PUSH_RTS", False))
+CNB_DATASINK_RTS_AUTH = os.getenv("CNB_DATASINK_RTS_AUTH", None)
+CNB_DATASINK_RTS_USER = os.getenv("CNB_DATASINK_RTS_USER", None)
+CNB_DATASINK_RTS_HOST = os.getenv("CNB_DATASINK_RTS_HOST", "localhost")
+CNB_DATASINK_RTS_PORT = int(os.getenv("CNB_DATASINK_RTS_PORT", "6379"))
 REDIS_HEALTH_CHECK_INTERVAL = int(os.getenv("REDIS_HEALTH_CHECK_INTERVAL", "15"))
 REDIS_SOCKET_TIMEOUT = int(os.getenv("REDIS_SOCKET_TIMEOUT", "300"))
 
@@ -55,20 +55,20 @@ def cli_args(parser):
         help="Test suites folder, containing the different test variations",
     )
     parser.add_argument(
-        "--datasink_redistimeseries_host", type=str, default=DATASINK_RTS_HOST
+        "--datasink_redistimeseries_host", type=str, default=CNB_DATASINK_RTS_HOST
     )
     parser.add_argument(
-        "--datasink_redistimeseries_port", type=int, default=DATASINK_RTS_PORT
+        "--datasink_redistimeseries_port", type=int, default=CNB_DATASINK_RTS_PORT
     )
     parser.add_argument(
-        "--datasink_redistimeseries_pass", type=str, default=DATASINK_RTS_AUTH
+        "--datasink_redistimeseries_pass", type=str, default=CNB_DATASINK_RTS_AUTH
     )
     parser.add_argument(
-        "--datasink_redistimeseries_user", type=str, default=DATASINK_RTS_USER
+        "--datasink_redistimeseries_user", type=str, default=CNB_DATASINK_RTS_USER
     )
     parser.add_argument(
         "--datasink_push_results_redistimeseries",
-        default=DATASINK_RTS_PUSH,
+        default=CNB_DATASINK_RTS_PUSH,
         action="store_true",
         help="uploads the results to RedisTimeSeries. Proper credentials are required",
     )

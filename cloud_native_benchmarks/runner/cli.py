@@ -5,13 +5,21 @@
 #
 
 import argparse
+
+# import datetime
 import logging
 import os
 import sys
 import traceback
 
 import redis
-from redisbench_admin.run.common import get_start_time_vars
+from redisbench_admin.run.common import (
+    get_start_time_vars,
+)
+from redisbench_admin.run_remote.remote_client import (
+    run_remote_benchmark,
+)
+from redisbench_admin.run_remote.remote_helpers import remote_tool_pre_bench_step
 
 from cloud_native_benchmarks.inventory.client_terraform import (
     get_client_terraform_spec,
@@ -33,13 +41,20 @@ from .poetry import (
 )
 from .specs import get_benchmark_specs
 from .ssh import ssh_pem_check
+from .ycsb import prepare_ycsb_benchmark_command
 from ..inventory.common import get_run_full_filename
+from ..inventory.config import extract_benchmark_tool_settings
 
 
 def cli_logic(args):
     testsuites_folder = os.path.abspath(args.test_suites_folder)
     logging.info("Using test-suites folder dir {}".format(testsuites_folder))
-    testsuite_specs = get_benchmark_specs(testsuites_folder, args.defaults_filename)
+    specs_setup_result, testsuite_specs = get_benchmark_specs(
+        testsuites_folder, args.defaults_filename
+    )
+    if specs_setup_result is False:
+        logging.warning("Error preparing SPEC. Exiting...")
+        exit(1)
     logging.info(
         "There are a total of {} test-suites in folder {}".format(
             len(testsuite_specs), testsuites_folder
@@ -82,6 +97,9 @@ def cli_logic(args):
 
     logging.info("checking build spec requirements")
     for filename, spec in testsuite_specs.items():
+        logging.info("Calling DBWrapper SETUP")
+        spec["db_wrapper"].setup()
+
         test_name = spec["test_name"]
         result, source, branch, path, private_key_map = get_client_terraform_spec(
             spec["inventory"]
@@ -124,6 +142,12 @@ def cli_logic(args):
                 "client_private_ip": client_private_ip,
             }
 
+            logging.info(
+                "Using client machine with username={} client_public_ip={} client_private_ip={}".format(
+                    username, client_public_ip, client_private_ip
+                )
+            )
+
             (
                 start_time,
                 start_time_ms,
@@ -138,10 +162,75 @@ def cli_logic(args):
             logging.info(
                 "Will store benchmark result in file {}".format(local_bench_fname)
             )
+            benchmark_config = spec["benchmark_config"]
+            clientconfig = spec["clientconfig"]
+            private_key = private_key_map["location"]
+
+            (
+                benchmark_min_tool_version,
+                benchmark_min_tool_version_major,
+                benchmark_min_tool_version_minor,
+                benchmark_min_tool_version_patch,
+                benchmark_tool,
+                benchmark_tool_source,
+                _,
+            ) = extract_benchmark_tool_settings(clientconfig)
+            client_ssh_port = 22
+            # setup the benchmark tool
+            remote_tool_pre_bench_step(
+                benchmark_config,
+                benchmark_min_tool_version,
+                benchmark_min_tool_version_major,
+                benchmark_min_tool_version_minor,
+                benchmark_min_tool_version_patch,
+                benchmark_tool,
+                client_public_ip,
+                username,
+                benchmark_tool_source,
+                "clientconfig",
+                "ubuntu",
+                "",
+                client_ssh_port,
+                private_key,
+            )
+            remote_results_file = "/tmp/results"
+            if "ycsb" in benchmark_tool:
+                benchmark_tool = "/tmp/ycsb/bin/ycsb"
+                current_workdir = "/tmp/ycsb"
+                command_arr, command_str = prepare_ycsb_benchmark_command(
+                    benchmark_tool,
+                    clientconfig,
+                    current_workdir,
+                )
+            printed_command_str = command_str
+            printed_command_arr = command_arr
+            if len(command_str) > 500:
+                printed_command_str = command_str[:500] + "... (trimmed output) ..."
+                printed_command_arr = printed_command_arr[:1] + [
+                    "(...) trimmed output...."
+                ]
+            logging.info(
+                "Running the benchmark with the following parameters:\n\tArgs array: {}\n\tArgs str: {}".format(
+                    printed_command_arr, printed_command_str
+                )
+            )
+
+            # benchmark_start_time = datetime.datetime.now()
+            # run the benchmark
+            remote_run_result, stdout, _ = run_remote_benchmark(
+                client_public_ip,
+                username,
+                private_key,
+                remote_results_file,
+                local_bench_fname,
+                command_str,
+                client_ssh_port,
+            )
+            # benchmark_end_time = datetime.datetime.now()
 
         except KeyboardInterrupt:
             logging.critical(
-                "Detected Keyboard interruput...Destroy all remote envs and exiting right away!"
+                "Detected Keyboard interrupt...Destroy all remote envs and exiting right away!"
             )
             terraform_destroy(remote_envs)
             exit(1)

@@ -6,6 +6,7 @@
 
 import os
 import logging
+import re
 
 from .common import priority_merge_dict
 
@@ -67,3 +68,46 @@ def get_db_env_map(inventory_spec, db_keyname="db"):
                     )
                 env_map[env_var_name] = env_var_value
     return result, env_map
+
+
+def extract_benchmark_tool_settings(benchmark_config):
+    benchmark_tool = None
+    benchmark_tool_source = None
+    benchmark_tool_source_inner_path = None
+    benchmark_min_tool_version = None
+    benchmark_min_tool_version_major = None
+    benchmark_min_tool_version_minor = None
+    benchmark_min_tool_version_patch = None
+    if "tool" in benchmark_config:
+        benchmark_tool = benchmark_config["tool"]
+    if "tool_source" in benchmark_config:
+        if "remote" in benchmark_config["tool_source"]:
+            benchmark_tool_source = benchmark_config["tool_source"]["remote"]
+        if "bin_path" in benchmark_config["tool_source"]:
+            benchmark_tool_source_inner_path = benchmark_config["tool_source"][
+                "bin_path"
+            ]
+
+    if "min-tool-version" in benchmark_config:
+        benchmark_min_tool_version = benchmark_config["min-tool-version"]
+        p = re.compile(r"(\d+)\.(\d+)\.(\d+)")
+        m = p.match(benchmark_min_tool_version)
+        if m is None:
+            logging.error(
+                "Unable to extract semversion from 'min-tool-version'."
+                " Will not enforce version"
+            )
+            benchmark_min_tool_version = None
+        else:
+            benchmark_min_tool_version_major = m.group(1)
+            benchmark_min_tool_version_minor = m.group(2)
+            benchmark_min_tool_version_patch = m.group(3)
+    return (
+        benchmark_min_tool_version,
+        benchmark_min_tool_version_major,
+        benchmark_min_tool_version_minor,
+        benchmark_min_tool_version_patch,
+        benchmark_tool,
+        benchmark_tool_source,
+        benchmark_tool_source_inner_path,
+    )
